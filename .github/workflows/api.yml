@@ -1,22 +1,39 @@
-name: Dashboard Deployment
+name: API Deployment
 env:
-  imageName: "${{ secrets.ACR_LOGIN_SERVER }}/techexcel/csdash:${{github.run_number}}"
-  appName: app-${{ vars.APP_PREFIX }}-dash
-  appPath: ./src/ContosoSuitesDashboard
+  imageName: "${{ secrets.ACR_LOGIN_SERVER }}/techexcel/csapi:${{github.run_number}}"
+  appName: app-${{ vars.APP_PREFIX }}-api
+  appPath: ./src/ContosoSuitesWebAPI
 on:
   push:
-    branches: [ main ]
-    paths: src/ContosoSuitesDashboard/**
+    branches: [ evi-test ]
+    paths: src/ContosoSuitesWebAPI/**
   pull_request:
-    branches: [ main ]
-    paths: src/ContosoSuitesDashboard/**
+    branches: [ evi-test ]
+    paths: src/ContosoSuitesWebAPI/**
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 jobs:
-  dockerBuildPush:
+  build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0
+    
+    - name: Restore dependencies
+      run: dotnet restore $appPath
+    - name: Build
+      run: dotnet build --no-restore $appPath
+      
+  dockerBuildPush:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
     
     - name: Docker Login
       # You may pin to the exact commit or the version.
@@ -31,12 +48,7 @@ jobs:
         password: ${{ secrets.ACR_PASSWORD }}
         # Log out from the Docker registry at the end of a job
         logout: true
-    
-    - name: Create Secrets File
-      run: echo "$STREAMLIT_SECRETS" > $appPath/.streamlit/secrets.toml
-      shell: bash
-      env:
-          STREAMLIT_SECRETS: ${{ secrets.STREAMLIT_SECRETS }}
+        
     - name: Docker Build
       run: docker build -t $imageName --build-arg build_version=${{github.run_number}} $appPath
       
@@ -51,9 +63,7 @@ jobs:
       url: ${{ steps.app-deploy.outputs.webapp-url }}
     
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: 'Login via Azure CLI'
+    - name: Login via Azure CLI
       uses: azure/login@v2.1.1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
