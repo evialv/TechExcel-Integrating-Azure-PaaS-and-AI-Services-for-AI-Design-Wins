@@ -24,6 +24,15 @@ builder.Services.AddSingleton<MaintenanceCopilot, MaintenanceCopilot>();
 builder.Services.AddSingleton<IDatabaseService, DatabaseService>((_) => 
 {
     var connectionString = builder.Configuration.GetConnectionString("ContosoSuites");
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        Console.WriteLine("❌ Connection string is MISSING!");
+    }
+    else
+    {
+        Console.WriteLine($"✅ Connection string loaded: {connectionString.Substring(0, 30)}...");
+    }
+
     return new DatabaseService(connectionString!);
 });
 
