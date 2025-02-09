@@ -38,7 +38,7 @@ namespace ContosoSuites.Functions
             var tenantId = Environment.GetEnvironmentVariable("AZURE_TENANT_ID");
             _logger = loggerFactory.CreateLogger<CosmosChangeFeedVectorization>();
             var oaiEndpoint = new Uri(endpointUrl);
-            var credentials = new DefaultAzureCredential(new DefaultAzureCredentialOptions { TenantId = tenantId });
+            var credentials = new DefaultAzureCredential(new DefaultAzureCredentialOptions { TenantId = tenantId,Diagnostics = { IsLoggingEnabled = true } });
             var openAIClient = new AzureOpenAIClient(oaiEndpoint, credentials);
             _embeddingClient = openAIClient.GetEmbeddingClient(deploymentName);   
         }
